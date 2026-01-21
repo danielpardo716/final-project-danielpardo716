@@ -1,0 +1,10 @@
+header:
+  version: 19
+
+machine: qemuarm
+
+local_conf_header:
+  qemu: |
+    QB_MEM = "256"
+    QB_CPU = "cortex-a7"
+    QB_NETWORK_DEVICE = "virtio-net"

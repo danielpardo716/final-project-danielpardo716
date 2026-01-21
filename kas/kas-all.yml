@@ -1,0 +1,13 @@
+header:
+  version: 19
+
+builds:
+  raspberrypi0-wifi:
+    machine: raspberrypi0-wifi
+    target:
+      - core-image-base
+
+  qemu:
+    machine: qemuarm
+    target:
+      - core-image-base
