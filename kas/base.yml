@@ -20,14 +20,27 @@ repos:
     url: "https://git.openembedded.org/meta-openembedded"
     branch: "kirkstone"
     path: "layers/meta-openembedded"
+    layers:
+      meta-oe:
+      meta-networking:
+      meta-perl:
+      meta-python:
+      meta-filesystems:
 
   meta-security:
     url: "https://git.yoctoproject.org/meta-security"
     branch: "kirkstone"
     path: "layers/meta-security"
 
+  meta-aesd:
+    path: "meta-aesd"
+
+bblayers_conf_header:
+  meta-aesd: |
+    DISTRO_FEATURES:append = " security"
+
 local_conf_header:
-  meta-custom: |
+  meta-aesd: |
     # Use 4 threads for faster builds
     BB_NUMBER_THREADS = "4"
     PARALLEL_NAME = "-j 4"
