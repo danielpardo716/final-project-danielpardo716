@@ -1,0 +1,53 @@
+header:
+  version: 19
+
+distro: "poky"
+
+target:
+  - core-image-base
+
+repos:
+  poky:
+    url: "https://git.yoctoproject.org/git/poky"
+    branch: "kirkstone"
+    path: "layers/poky"
+    layers:
+      meta:
+      meta-poky:
+      meta-yocto-bsp:
+
+  meta-openembedded:
+    url: "https://git.openembedded.org/meta-openembedded"
+    branch: "kirkstone"
+    path: "layers/meta-openembedded"
+    layers:
+      meta-oe:
+      meta-networking:
+      meta-perl:
+      meta-python:
+      meta-filesystems:
+
+  meta-security:
+    url: "https://git.yoctoproject.org/meta-security"
+    branch: "kirkstone"
+    path: "layers/meta-security"
+
+  meta-aesd:
+    path: "meta-aesd"
+
+bblayers_conf_header:
+  meta-aesd: |
+    DISTRO_FEATURES:append = " security"
+
+local_conf_header:
+  meta-aesd: |
+    # Use 4 threads for faster builds
+    BB_NUMBER_THREADS = "4"
+    PARALLEL_NAME = "-j 4"
+    PACKAGE_CLASSES ?= "package_rpm"
+
+    # Remove working directory after build to save space
+    INHERIT += "rm_work"
+
+    # Disable test features
+    IMAGE_FEATURES:remove = "ptest"

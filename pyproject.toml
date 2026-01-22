@@ -1,0 +1,11 @@
+[project]
+name = "final-project-danielpardo716"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "kas>=5.1",
+    "kconfiglib>=14.1.0",
+    "newt>=0.1.0",
+]
