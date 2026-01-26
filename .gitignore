@@ -2,4 +2,3 @@ build
 .vscode
 valgrind-out.txt
 test.sh.log
-.venv
