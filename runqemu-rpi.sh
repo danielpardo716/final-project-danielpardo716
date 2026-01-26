@@ -1,4 +1,4 @@
-# Shell script to start Raspberry Pi 3 (64-bit) on QEMU
+# Shell script to start Raspberry Pi Zero W (64-bit) on QEMU
 #!/bin/sh
 
 KERNEL="buildroot/output/images/Image"
@@ -25,7 +25,7 @@ fi
 
 
 qemu-system-aarch64 \
-	-M raspi3 \
+	-M raspi0 \
 	-kernel $KERNEL \
 	-dtb $DTB \
 	-m 1024 -nographic \
