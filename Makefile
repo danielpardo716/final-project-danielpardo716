@@ -4,7 +4,7 @@ KAS_SHELL = $(KAS_CMD) shell
 KAS_DIR = ./kas
 KAS_BASE = $(KAS_DIR)/base.yml
 
-.PHONY: all rpi0 qemu clean
+.PHONY: all raspberrypi0-wifi qemu clean
 
 # Build both using multi-machine config
 all:
