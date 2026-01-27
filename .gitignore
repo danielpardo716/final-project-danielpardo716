@@ -1,7 +1,5 @@
-build
-.vscode
-valgrind-out.txt
-test.sh.log
-.venv
-.o
-.kas_shell_history
+*.o
+build/
+.vscode/
+*.log
+wpa_supplicant.conf
