@@ -1,6 +1,6 @@
 CC ?= ${CROSS_COMPILE}gcc
 CCFLAGS ?= -g -Wall -Werror
-LDFLAGS ?= -lpthread -lrt
+LDFLAGS ?= -lpthread -lrt -lgpiod
 SRC_DIR ?= src
 OBJ_DIR ?= obj
 TARGET ?= aesdled
