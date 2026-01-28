@@ -28,4 +28,4 @@ config:
 	@$(SCRIPT_DIR)/save-config.sh
 
 ssh:
-	@$(SCRIPT_DIR)/ssh-connect.sh
+	@$(SCRIPT_DIR)/ssh-connect.sh $(HOSTNAME)

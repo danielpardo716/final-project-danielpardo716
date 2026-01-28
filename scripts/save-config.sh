@@ -2,8 +2,8 @@
 #Script to save the modified configuration as modified_qemu_aarch64_virt_defconfig and linux kernel configuration.
 #Author: Siddhant Jajoo.
 
-cd `dirname $0`
-source shared.sh
+cd `dirname $0`/..
+source scripts/shared.sh
 mkdir -p base_external/configs/
 make -C buildroot savedefconfig BR2_DEFCONFIG=${AESD_MODIFIED_DEFCONFIG_REL_BUILDROOT}
 

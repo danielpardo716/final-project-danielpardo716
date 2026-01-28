@@ -4,5 +4,5 @@
 # the previous keys from our host's known hosts.
 HOSTNAME=$1
 
-ssh-keygen -f '/home/$USER/.ssh/known_hosts' -R '$HOSTNAME'
+ssh-keygen -f '/home/'$USER'/.ssh/known_hosts' -R $HOSTNAME
 ssh root@$HOSTNAME

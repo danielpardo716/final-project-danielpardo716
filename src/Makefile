@@ -1,26 +1,17 @@
 CC ?= ${CROSS_COMPILE}gcc
 CCFLAGS ?= -g -Wall -Werror
-LDFLAGS ?= -lpthread -lrt -lgpiod
-SRC_DIR ?= src
-OBJ_DIR ?= obj
-TARGET ?= aesdled
-
-SRCS := led_blinky.c
-OBJS := led_blinky.o
+LDARGS := -lgpiod -lpthread -lrt
+TARGET ?= led_blinky
 
 all: $(TARGET)
 
-# Linking object files to create the final executable
-$(TARGET): $(OBJS)
-	mkdir -p $(dir $@)
-	$(CC) $(LDFLAGS) -o $@ $^
+led_blinky.o: led_blinky.c
+	$(CC) $(CCFLAGS) -c led_blinky.c
 
-# Compiling source files to object files
-$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
-	mkdir -p $(dir $@)
-	$(CC) $(CCFLAGS) -c -o $@ $<
+$(TARGET): led_blinky.o
+	$(CC) led_blinky.o -o led_blinky $(LDFLAGS) $(LDARGS)
 
 clean:
-	rm -rf $(OBJ_DIR) $(TARGET)
+	rm -rf led_blinky.o $(TARGET)
 
 .PHONY: all clean
