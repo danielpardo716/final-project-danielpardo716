@@ -1,6 +1,7 @@
 # Shell script to start Raspberry Pi Zero W (64-bit) on QEMU
 #!/bin/sh
 
+cd `dirname $0`/..
 KERNEL="buildroot/output/images/zImage"
 DTB="buildroot/output/images/bcm2708-rpi-zero-w.dtb" 
 ROOTFS="buildroot/output/images/rootfs.ext2"
