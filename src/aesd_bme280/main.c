@@ -1,4 +1,7 @@
+#include <linux/kernel.h>
 #include <linux/module.h>
+#include <linux/init.h>
+#include <linux/device.h>
 #include <linux/fs.h>
 #include <linux/cdev.h>
 #include <linux/uaccess.h>
@@ -6,6 +9,7 @@
 #include <linux/types.h>
 #include "aesd_bme280.h"
 
+static struct class* aesd_bme280_class;
 static uint32_t bme280_measurement_period;
 
 static BME280_INTF_RET_TYPE bme280_i2c_read(uint8_t reg_addr, uint8_t *reg_data, uint32_t length, void *intf_ptr)
@@ -25,7 +29,6 @@ static BME280_INTF_RET_TYPE bme280_i2c_read(uint8_t reg_addr, uint8_t *reg_data,
 
 static BME280_INTF_RET_TYPE bme280_i2c_write(uint8_t reg_addr, const uint8_t *reg_data, uint32_t length, void *intf_ptr)
 {
-    int result;
     struct aesd_bme280_dev* dev = (struct aesd_bme280_dev*)intf_ptr;
     struct i2c_client* client = dev->i2c_client;
     uint8_t buffer[33]; // Bosch limits max write length to 32 bytes + 1 byte for reg_addr
@@ -88,8 +91,10 @@ static void bme280_error_codes_print_result(const char api_name[], int8_t rslt)
 
 static int aesd_open(struct inode* inode, struct file* filp)
 {
+    struct aesd_bme280_dev* dev;
     PDEBUG("aesd_bme280 opened");
-    struct aesd_bme280_dev* dev = container_of(inode->i_cdev, struct aesd_bme280_dev, cdev);
+
+    dev = container_of(inode->i_cdev, struct aesd_bme280_dev, cdev);
     filp->private_data = dev;
     return 0;
 }
@@ -108,17 +113,22 @@ static int aesd_read(struct file* filp, char __user* buf, size_t count, loff_t* 
     char buffer[64];
     int len, result;
 
+    // TODO: Check status flag and use delay_us if measurement is not complete
+
     if ((result = bme280_get_sensor_data(BME280_ALL, &comp_data, sensor)) != 0)
     {
         bme280_error_codes_print_result("bme280_get_sensor_data", result);
         return result;
     }
 
-    len = scnprintk(buffer, sizeof(buffer),
-                    "T=%.2f°C P=%.2fhPa H=%.2f%%\n",
-                    comp_data.temperature,
-                    comp_data.pressure / 100.0,
-                    comp_data.humidity);
+    len = scnprintf(buffer, sizeof(buffer),
+                    "T=%d.%02d°C P=%u.%02uPa H=%u.%01u%%\n",
+                    comp_data.temperature / 100,
+                    abs(comp_data.temperature) % 100,               /* fractional part */
+                    comp_data.pressure / 256,
+                    (comp_data.pressure % 256) * 100 / 256,        /* two‑digit fraction */
+                    comp_data.humidity / 1024,
+                    (comp_data.humidity % 1024) * 10 / 1024);      /* one‑digit fraction */
     if (*ppos > len)
     {
         // No more data to read (EOF)
@@ -150,6 +160,7 @@ static struct file_operations fops = {
 static int aesd_bme280_i2c_probe(struct i2c_client* client, const struct i2c_device_id* id)
 {
     struct aesd_bme280_dev* dev;
+    struct bme280_settings settings;
     int result;
 
     // Allocate memory for device structure
@@ -162,6 +173,17 @@ static int aesd_bme280_i2c_probe(struct i2c_client* client, const struct i2c_dev
     dev->i2c_client = client;
     i2c_set_clientdata(client, dev);
 
+    // Create device class (first time only)
+    if (!aesd_bme280_class)
+    {
+        aesd_bme280_class = class_create(THIS_MODULE, "aesd_bme280");
+        if (IS_ERR(aesd_bme280_class))
+        {
+            PDEBUG("Failed to create device class\n");
+            return PTR_ERR(aesd_bme280_class);
+        }
+    }
+
     // Configure sensor to use our I2C methods
     dev->sensor.intf        = BME280_I2C_INTF;
     dev->sensor.intf_ptr    = dev;                      // Store pointer to be used in read/write functions
@@ -170,16 +192,14 @@ static int aesd_bme280_i2c_probe(struct i2c_client* client, const struct i2c_dev
     dev->sensor.delay_us    = bme280_delay_us;
 
     // Initialize sensor
-    int result = 0;
-    if ((result = bme280_init(dev->sensor)) < 0)
+    if ((result = bme280_init(&dev->sensor)) < 0)
     {
         bme280_error_codes_print_result("bme280_init", result);
         return result;
     }
 
     // Configure sensor settings
-    struct bme280_settings settings;
-    if ((result = bme280_get_sensor_settings(&settings, dev->sensor)) != 0)
+    if ((result = bme280_get_sensor_settings(&settings, &dev->sensor)) != 0)
     {
         bme280_error_codes_print_result("bme280_get_sensor_settings", result);
         return result;
@@ -189,14 +209,14 @@ static int aesd_bme280_i2c_probe(struct i2c_client* client, const struct i2c_dev
     settings.osr_p = BME280_OVERSAMPLING_1X;                // Oversampling for pressure
     settings.osr_t = BME280_OVERSAMPLING_1X;                // Oversampling for temperature
     settings.standby_time = BME280_STANDBY_TIME_0_5_MS;     // Standby time
-    if ((result = bme280_set_sensor_settings(BME280_SEL_ALL_SETTINGS, &settings, dev->sensor)) != 0)
+    if ((result = bme280_set_sensor_settings(BME280_SEL_ALL_SETTINGS, &settings, &dev->sensor)) != 0)
     {
         bme280_error_codes_print_result("bme280_set_sensor_settings", result);
         return result;
     }
 
     // Always set the power mode after setting the configuration
-    if ((result = bme280_set_sensor_mode(BME280_POWERMODE_NORMAL, dev->sensor)) != 0)
+    if ((result = bme280_set_sensor_mode(BME280_POWERMODE_NORMAL, &dev->sensor)) != 0)
     {
         bme280_error_codes_print_result("bme280_set_sensor_mode", result);
         return result;
@@ -206,12 +226,6 @@ static int aesd_bme280_i2c_probe(struct i2c_client* client, const struct i2c_dev
     if ((result = bme280_cal_meas_delay(&bme280_measurement_period, &settings)) != 0)
     {
         bme280_error_codes_print_result("bme280_cal_meas_delay", result);
-        return result;
-    }
-    if ((result = init_sensor(&device.sensor)) != 0)
-    {
-        PDEBUG("Failed to initialize BME280 sensor\n");
-        unregister_chrdev_region(dev, 1);
         return result;
     }
 
@@ -234,7 +248,7 @@ static int aesd_bme280_i2c_probe(struct i2c_client* client, const struct i2c_dev
     }
 
     // Create device file in /dev
-    device_create(class_create(THIS_MODULE, "aesd_bme280"), NULL, dev->devno, NULL, "aesd_bme280");
+    device_create(aesd_bme280_class, NULL, dev->devno, NULL, "aesd_bme280");
     dev_info(&client->dev, "aesd_bme280 device registered with major %d and minor %d\n", MAJOR(dev->devno), MINOR(dev->devno));
 
     return 0;
@@ -244,9 +258,17 @@ static int aesd_bme280_i2c_remove(struct i2c_client* client)
 {
     struct aesd_bme280_dev* dev = i2c_get_clientdata(client);
 
-    device_destroy(class_find("aesd_bme280"), dev->devno);
+    device_destroy(aesd_bme280_class, dev->devno);
     cdev_del(&dev->cdev);
     unregister_chrdev_region(dev->devno, 1);
+
+    if (aesd_bme280_class)
+    {
+        class_destroy(aesd_bme280_class);
+        aesd_bme280_class = NULL;
+    }
+
+    dev_info(&client->dev, "aesd_bme280 device removed\n");
     return 0;
 }
 
