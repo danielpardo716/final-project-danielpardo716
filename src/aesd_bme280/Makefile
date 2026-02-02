@@ -14,6 +14,7 @@ EXTRA_CFLAGS += $(DEBFLAGS)
 ifneq ($(KERNELRELEASE),)
 # call from kernel build system
 obj-m	:= aesd_bme280.o
+aesd_bme280-y := bme280_api/bme280.o main.o
 else
 
 KERNELDIR ?= /lib/modules/$(shell uname -r)/build
