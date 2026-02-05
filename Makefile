@@ -13,7 +13,7 @@ all: build
 # -----------------------------------------------------------------
 # Individual targets – just invoke the Bash helpers
 # -----------------------------------------------------------------
-.PHONY: build flash qemu config ssh dirclean
+.PHONY: build flash qemu config ssh dirclean menuconfig
 
 build: dirclean
 	@$(SCRIPT_DIR)/build.sh
@@ -32,3 +32,6 @@ ssh:
 
 dirclean:
 	cd buildroot && make aesd-final-project-dirclean && cd ..
+
+menuconfig:
+	cd buildroot && make menuconfig && cd ..

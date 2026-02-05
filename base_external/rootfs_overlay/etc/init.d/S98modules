@@ -2,10 +2,14 @@
 case "$1" in
     start)
         echo "Starting aesd_bme280 module"
+        modprobe i2c-dev
+        modprobe i2c-bcm2835
         module_load aesd_bme280
         ;;
     stop)
         echo "Stopping aesd_bme280 module"
+        rmmod i2c-bcm2835
+        rmmod i2c-dev
         module_unload aesd_bme280
         ;;
     *)
