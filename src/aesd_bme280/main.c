@@ -162,6 +162,7 @@ static int aesd_bme280_i2c_probe(struct i2c_client* client, const struct i2c_dev
     struct aesd_bme280_dev* dev;
     struct bme280_settings settings;
     int result;
+    PDEBUG("Probing aesd_bme280 sensor at I2C address 0x%02x\n", client->addr);
 
     // Allocate memory for device structure
     dev = devm_kzalloc(&client->dev, sizeof(struct aesd_bme280_dev), GFP_KERNEL);
@@ -172,17 +173,6 @@ static int aesd_bme280_i2c_probe(struct i2c_client* client, const struct i2c_dev
     }
     dev->i2c_client = client;
     i2c_set_clientdata(client, dev);
-
-    // Create device class (first time only)
-    if (!aesd_bme280_class)
-    {
-        aesd_bme280_class = class_create(THIS_MODULE, "aesd_bme280");
-        if (IS_ERR(aesd_bme280_class))
-        {
-            PDEBUG("Failed to create device class\n");
-            return PTR_ERR(aesd_bme280_class);
-        }
-    }
 
     // Configure sensor to use our I2C methods
     dev->sensor.intf        = BME280_I2C_INTF;
@@ -229,6 +219,17 @@ static int aesd_bme280_i2c_probe(struct i2c_client* client, const struct i2c_dev
         return result;
     }
 
+    // Create device class (first time only)
+    if (!aesd_bme280_class)
+    {
+        aesd_bme280_class = class_create(THIS_MODULE, "aesd_bme280");
+        if (IS_ERR(aesd_bme280_class))
+        {
+            PDEBUG("Failed to create device class\n");
+            return PTR_ERR(aesd_bme280_class);
+        }
+    }
+
     // Allocate character device region
     if ((result = alloc_chrdev_region(&dev->devno, 0, 1, "aesd_bme280")) < 0)
     {
@@ -273,30 +274,30 @@ static int aesd_bme280_i2c_remove(struct i2c_client* client)
 }
 
 /* I²C device ID table – matches the DT compatible string */
-static const struct i2c_device_id bme280_id[] = {
+static const struct i2c_device_id aesd_bme280_id[] = {
     { "aesd_bme280", 0 },
     { }
 };
-MODULE_DEVICE_TABLE(i2c, bme280_id);
+MODULE_DEVICE_TABLE(i2c, aesd_bme280_id);
 
 /* OF match table for Device Tree */
-static const struct of_device_id bme280_of_match[] = {
-    { .compatible = "bosch,bme280" },
+static const struct of_device_id aesd_bme280_of_match[] = {
+    { .compatible = "aesd,aesd_bme280" },
     { }
 };
-MODULE_DEVICE_TABLE(of, bme280_of_match);
+MODULE_DEVICE_TABLE(of, aesd_bme280_of_match);
 
 
 /* I²C driver definition */
 static struct i2c_driver aesd_bme280_i2c_driver = {
     .driver = {
         .name   = "aesd_bme280",
-        .of_match_table = bme280_of_match,
+        .of_match_table = aesd_bme280_of_match,
         .owner = THIS_MODULE,
     },
     .probe    = aesd_bme280_i2c_probe,
     .remove   = aesd_bme280_i2c_remove,
-    .id_table = bme280_id,
+    .id_table = aesd_bme280_id,
 };
 
 module_i2c_driver(aesd_bme280_i2c_driver);
