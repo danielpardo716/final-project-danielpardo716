@@ -24,7 +24,7 @@ static BME280_INTF_RET_TYPE bme280_i2c_read(uint8_t reg_addr, uint8_t *reg_data,
         return result;
     }
 
-    return i2c_master_recv(client, reg_data, length);
+    return (i2c_master_recv(client, reg_data, length) >= 0) ? BME280_INTF_RET_SUCCESS : -EIO;
 }
 
 static BME280_INTF_RET_TYPE bme280_i2c_write(uint8_t reg_addr, const uint8_t *reg_data, uint32_t length, void *intf_ptr)
@@ -40,7 +40,7 @@ static BME280_INTF_RET_TYPE bme280_i2c_write(uint8_t reg_addr, const uint8_t *re
 
     buffer[0] = reg_addr;
     memcpy(&buffer[1], reg_data, length);
-    return i2c_master_send(client, buffer, length + 1);
+    return (i2c_master_send(client, buffer, length + 1) >= 0) ? BME280_INTF_RET_SUCCESS : -EIO;
 }
 
 static void bme280_delay_us(uint32_t period, void *intf_ptr)
@@ -58,33 +58,28 @@ static void bme280_delay_us(uint32_t period, void *intf_ptr)
 
 static void bme280_error_codes_print_result(const char api_name[], int8_t rslt)
 {
-    printk("%s\t", api_name);
-
     switch (rslt)
     {
         case BME280_E_NULL_PTR:
-            printk("Error [%d] : Null pointer error.", rslt);
-            printk(
-                "It occurs when the user tries to assign value (not address) to a pointer, which has been initialized to NULL.\r\n");
+            PDEBUG("%s Error [%d] : Null pointer error.", api_name, rslt);
+            PDEBUG("It occurs when the user tries to assign value (not address) to a pointer, which has been initialized to NULL.\r\n");
             break;
 
         case BME280_E_COMM_FAIL:
-            printk("Error [%d] : Communication failure error.", rslt);
-            printk(
-                "It occurs due to read/write operation failure and also due to power failure during communication\r\n");
+            PDEBUG("%s Error [%d] : Communication failure error.", api_name, rslt);
+            PDEBUG("It occurs due to read/write operation failure and also due to power failure during communication\r\n");
             break;
 
         case BME280_E_DEV_NOT_FOUND:
-            printk("Error [%d] : Device not found error. It occurs when the device chip id is incorrectly read\r\n",
-                    rslt);
+            PDEBUG("%s Error [%d] : Device not found error. It occurs when the device chip id is incorrectly read\r\n", api_name, rslt);
             break;
 
         case BME280_E_INVALID_LEN:
-            printk("Error [%d] : Invalid length error. It occurs when write is done with invalid length\r\n", rslt);
+            PDEBUG("%s Error [%d] : Invalid length error. It occurs when write is done with invalid length\r\n", api_name, rslt);
             break;
 
         default:
-            printk("Error [%d] : Unknown error code\r\n", rslt);
+            PDEBUG("%s Error [%d] : Unknown error code\r\n", api_name, rslt);
             break;
     }
 }
@@ -122,7 +117,7 @@ static int aesd_read(struct file* filp, char __user* buf, size_t count, loff_t* 
     }
 
     len = scnprintf(buffer, sizeof(buffer),
-                    "T=%d.%02d°C P=%u.%02uPa H=%u.%01u%%\n",
+                    "T = %d.%02d°C, P = %u.%02uPa, H = %u.%01u%%\n",
                     comp_data.temperature / 100,
                     abs(comp_data.temperature) % 100,               /* fractional part */
                     comp_data.pressure / 256,
