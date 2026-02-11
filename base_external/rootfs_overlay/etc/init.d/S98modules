@@ -1,0 +1,19 @@
+#!/bin/sh
+case "$1" in
+    start)
+        echo "Starting aesd_bme280 module"
+        modprobe i2c-dev
+        modprobe i2c-bcm2835
+        modprobe aesd_bme280
+        echo aesd_bme280 0x76 > /sys/bus/i2c/devices/i2c-1/new_device
+        ;;
+    stop)
+        echo "Stopping aesd_bme280 module"
+        rmmod i2c-bcm2835
+        rmmod i2c-dev
+        rmmod aesd_bme280
+        ;;
+    *)
+        echo "Usage: $0 {start|stop}"
+    exit 1
+esac

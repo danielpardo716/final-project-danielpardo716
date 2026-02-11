@@ -3,3 +3,13 @@ build/
 .vscode/
 *.log
 wpa_supplicant.conf
+*.order
+*.symvers
+*.ko
+.*.cmd
+.tmp_versions*
+*.mod.c
+linux_source_cdt
+*.mod
+build
+tmp
