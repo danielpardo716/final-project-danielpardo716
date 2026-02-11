@@ -3,6 +3,7 @@
 
 #include <linux/i2c.h>
 #include "bme280_api/bme280.h"
+#include "aesd_bme280_ioctl.h"
 
 #define AESD_DEBUG 1  //Remove comment on this line to enable debug
 

@@ -107,9 +107,7 @@ static int aesd_read(struct file* filp, char __user* buf, size_t count, loff_t* 
     struct bme280_data comp_data;
     char buffer[64];
     int len, result;
-
-    // TODO: Check status flag and use delay_us if measurement is not complete
-
+    
     if ((result = bme280_get_sensor_data(BME280_ALL, &comp_data, sensor)) != 0)
     {
         bme280_error_codes_print_result("bme280_get_sensor_data", result);
@@ -145,9 +143,49 @@ static int aesd_read(struct file* filp, char __user* buf, size_t count, loff_t* 
     return count;
 }
 
+static long aesd_ioctl(struct file* filp, unsigned int cmd, unsigned long arg)
+{
+    struct aesd_bme280_dev* dev = filp->private_data;
+    struct bme280_dev* sensor = &dev->sensor;
+    struct bme280_data comp_data;
+    long result;
+
+    if ((result = bme280_get_sensor_data(BME280_ALL, &comp_data, sensor)) != 0)
+    {
+        bme280_error_codes_print_result("bme280_get_sensor_data", result);
+        return result;
+    }
+
+    switch (cmd)
+    {
+        case AESD_BME280_GET_TEMPERATURE:
+            return copy_to_user((int __user*)arg, &comp_data.temperature, sizeof(int)) ? -EFAULT : 0;
+
+        case AESD_BME280_GET_PRESSURE:
+            return copy_to_user((int __user*)arg, &comp_data.pressure, sizeof(int)) ? -EFAULT : 0;
+
+        case AESD_BME280_GET_HUMIDITY:
+            return copy_to_user((int __user*)arg, &comp_data.humidity, sizeof(int)) ? -EFAULT : 0;
+
+        case AESD_BME280_GET_ALL:
+        {
+            struct aesd_bme280_data data = {
+                .temperature = comp_data.temperature,
+                .pressure = comp_data.pressure,
+                .humidity = comp_data.humidity
+            };
+            return copy_to_user((struct aesd_bme280_data __user*)arg, &data, sizeof(data)) ? -EFAULT : 0;
+        }
+
+        default:
+            return -EINVAL; // Invalid command
+    }
+}
+
 static struct file_operations fops = {
     .owner =            THIS_MODULE,
     .read =             aesd_read,
+    .unlocked_ioctl =   aesd_ioctl,
     .open =             aesd_open,
     .release =          aesd_release,
 };
