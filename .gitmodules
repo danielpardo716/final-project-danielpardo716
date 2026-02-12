@@ -1,3 +1,6 @@
 [submodule "buildroot"]
 	path = buildroot
 	url = https://github.com/buildroot/buildroot.git
+[submodule "src/aesd_bme280/bme280_api"]
+	path = src/aesd_bme280/bme280_api
+	url = git@github.com:boschsensortec/BME280_SensorAPI.git
