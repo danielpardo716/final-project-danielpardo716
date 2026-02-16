@@ -1,0 +1,18 @@
+#!/bin/sh
+case "$1" in
+    start)
+        echo "Starting MQTT broker and daemons"
+        mosquitto -d
+        mqtt_publisher
+        mqtt_subscriber
+        ;;
+    stop)
+        echo "Stopping MQTT broker and daemons"
+        killall mqtt_publisher
+        killall mqtt_subscriber
+        mosquitto_pub -t '$SYS/broker/shutdown' -n
+        ;;
+    *)
+        echo "Usage: $0 {start|stop}"
+    exit 1
+esac

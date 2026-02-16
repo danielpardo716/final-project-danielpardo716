@@ -116,8 +116,8 @@ int main(int argc, char* argv[])
             }
         }
 
-        // Sleep for 10 seconds
-        sleep(10);
+        // Sleep for 3 seconds
+        sleep(3);
     }
 
     return 0;
