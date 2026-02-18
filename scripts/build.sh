@@ -12,6 +12,17 @@ git submodule update
 
 set -e 
 
+DEVICE_TREE_OVERLAY_SRC_PATH=src/aesd_bme280/aesd_bme280_overlay.dts
+DEVICE_TREE_OVERLAY_DEST_PATH=buildroot/output/images/rpi-firmware/overlays/aesd_bme280.dtbo
+
+if [ ! -e ${DEVICE_TREE_OVERLAY_DEST_PATH} ]
+then
+	echo "Compiling device tree overlay"
+	dtc -I dts -O dtb ${DEVICE_TREE_OVERLAY_SRC_PATH} -o ${DEVICE_TREE_OVERLAY_DEST_PATH}
+else
+	echo "Device tree overlay already exists, skipping compilation"
+fi
+
 if [ ! -e buildroot/.config ]
 then
 	echo "MISSING BUILDROOT CONFIGURATION FILE"
