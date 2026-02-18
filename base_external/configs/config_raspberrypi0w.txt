@@ -30,3 +30,6 @@ dtoverlay=krnbt=on
 
 # Enable I2C
 dtparam=i2c_arm=on
+
+# Enable custom overlay for BME280 sensor
+dtoverlay=aesd_bme280

@@ -1,0 +1,18 @@
+/dts-v1/;
+/plugin/;
+
+/ {
+    compatible = "brcm,bcm2835";
+
+    fragment@0 {
+        target = <&i2c1>;                           // I2C controller 1 on the Pi
+        
+        __overlay__ {
+            aesd_bme280@76 {
+                compatible = "aesd,aesd_bme280";    // Name defined in of_device_id
+                reg = <0x76>;                       // I2C address
+                status = "okay";                    // Enable
+            };
+        };
+    };
+};
