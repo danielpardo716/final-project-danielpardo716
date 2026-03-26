@@ -31,24 +31,24 @@ static void mqtt_log_callback(struct mosquitto* mosq, void* obj, int level, cons
     syslog(LOG_INFO, "MQTT log [%d]: %s", level, str);
 }
 
-void mqtt_init(struct mosquitto* mqtt_client, void (*cleanup_and_exit)(int), void (*msg_callback)(struct mosquitto*, void*, const struct mosquitto_message*))
+void mqtt_init(struct mosquitto** mqtt_client, void (*cleanup_and_exit)(int), void (*msg_callback)(struct mosquitto*, void*, const struct mosquitto_message*))
 {
     int result; 
 
     mosquitto_lib_init();
-    mqtt_client = mosquitto_new(NULL, true, NULL);
-    if (!mqtt_client)
+    *mqtt_client = mosquitto_new(NULL, true, NULL);
+    if (!(*mqtt_client))
     {
         syslog(LOG_ERR, "Failed to create Mosquitto instance: %s", strerror(errno));
         cleanup_and_exit(EXIT_FAILURE);
     }
     
     // Register callbacks
-    mosquitto_connect_callback_set(mqtt_client, mqtt_connect_callback);
-    mosquitto_log_callback_set(mqtt_client, mqtt_log_callback);
+    mosquitto_connect_callback_set(*mqtt_client, mqtt_connect_callback);
+    mosquitto_log_callback_set(*mqtt_client, mqtt_log_callback);
     if (msg_callback != NULL)
     {
-        mosquitto_message_callback_set(mqtt_client, msg_callback);
+        mosquitto_message_callback_set(*mqtt_client, msg_callback);
     }
     
     // Verify certificate files exist
@@ -69,14 +69,14 @@ void mqtt_init(struct mosquitto* mqtt_client, void (*cleanup_and_exit)(int), voi
     }
     
     // Set up TLS encryption
-    if ((result = mosquitto_tls_set(mqtt_client, MQTT_CAFILE, NULL, MQTT_CERTFILE, MQTT_KEYFILE, NULL)) != MOSQ_ERR_SUCCESS)
+    if ((result = mosquitto_tls_set(*mqtt_client, MQTT_CAFILE, NULL, MQTT_CERTFILE, MQTT_KEYFILE, NULL)) != MOSQ_ERR_SUCCESS)
     {
         syslog(LOG_ERR, "Failed to enable TLS encryption: %s", mosquitto_strerror(result));
         cleanup_and_exit(result);
     }
 
     // Connect to MQTT broker
-    if ((result = mosquitto_connect(mqtt_client, MQTT_BROKER_ADDR, MQTT_BROKER_PORT, 60)) != MOSQ_ERR_SUCCESS)
+    if ((result = mosquitto_connect(*mqtt_client, MQTT_BROKER_ADDR, MQTT_BROKER_PORT, 60)) != MOSQ_ERR_SUCCESS)
     {
         syslog(LOG_ERR, "Failed to connect to MQTT broker: %s", mosquitto_strerror(result));
         cleanup_and_exit(result);
@@ -112,12 +112,13 @@ void mqtt_wait_for_connection(struct mosquitto* mqtt_client, void (*cleanup_and_
     syslog(LOG_INFO, "MQTT connection established, starting sensor readings");
 }
 
-void mqtt_close(struct mosquitto* mqtt_client)
+void mqtt_close(struct mosquitto** mqtt_client)
 {
-    if (mqtt_client != NULL)
+    if (*mqtt_client != NULL)
     {
-        mosquitto_loop_stop(mqtt_client, true);
-        mosquitto_destroy(mqtt_client);
+        mosquitto_loop_stop(*mqtt_client, true);
+        mosquitto_destroy(*mqtt_client);
     }
     mosquitto_lib_cleanup();
+    *mqtt_client = NULL;
 }

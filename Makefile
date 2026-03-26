@@ -15,7 +15,7 @@ all: build
 # -----------------------------------------------------------------
 .PHONY: build flash qemu config ssh keygen mosquitto dirclean menuconfig
 
-build: dirclean
+build:
 	@$(SCRIPT_DIR)/build.sh
 
 qemu:

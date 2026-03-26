@@ -19,7 +19,7 @@ static struct gpiod_line* led_gpio_line;
 
 static void cleanup_and_exit(int exit_code)
 {
-    mqtt_close(mqtt_client);
+    mqtt_close(&mqtt_client);
     if (led_gpio_line != NULL)
     {
         gpiod_line_release(led_gpio_line);
@@ -96,7 +96,7 @@ int main(int argc, char* argv[])
         cleanup_and_exit(EXIT_FAILURE);
     }
 
-    mqtt_init(mqtt_client, cleanup_and_exit, mqtt_message_callback);
+    mqtt_init(&mqtt_client, cleanup_and_exit, mqtt_message_callback);
 
     // Daemonize the process
     if (daemon(0, 0) < 0)

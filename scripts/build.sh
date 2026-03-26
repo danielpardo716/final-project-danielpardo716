@@ -13,11 +13,13 @@ git submodule update
 set -e 
 
 DEVICE_TREE_OVERLAY_SRC_PATH=src/aesd_bme280/aesd_bme280_overlay.dts
-DEVICE_TREE_OVERLAY_DEST_PATH=buildroot/output/images/rpi-firmware/overlays/aesd_bme280.dtbo
+DEVICE_TREE_OVERLAY_DEST_DIR=buildroot/output/images/rpi-firmware/overlays
+DEVICE_TREE_OVERLAY_DEST_PATH="$DEVICE_TREE_OVERLAY_DEST_DIR"/aesd_bme280.dtbo
 
 if [ ! -e ${DEVICE_TREE_OVERLAY_DEST_PATH} ]
 then
 	echo "Compiling device tree overlay"
+	mkdir -p "$DEVICE_TREE_OVERLAY_DEST_DIR"
 	dtc -I dts -O dtb ${DEVICE_TREE_OVERLAY_SRC_PATH} -o ${DEVICE_TREE_OVERLAY_DEST_PATH}
 else
 	echo "Device tree overlay already exists, skipping compilation"

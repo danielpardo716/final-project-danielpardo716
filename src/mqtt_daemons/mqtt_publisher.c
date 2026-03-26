@@ -19,7 +19,7 @@ static int sensor_fd = -1;
 
 static void cleanup_and_exit(int exit_code)
 {
-    mqtt_close(mqtt_client);
+    mqtt_close(&mqtt_client);
     if (sensor_fd >= 0)
     {
         close(sensor_fd);
@@ -61,7 +61,7 @@ int main(int argc, char* argv[])
     openlog(NULL, 0, LOG_USER);
     init_signal_handler();
 
-    mqtt_init(mqtt_client, cleanup_and_exit, NULL);
+    mqtt_init(&mqtt_client, cleanup_and_exit, NULL);
 
     // Open sensor
     sensor_fd = open(SENSOR_DRIVER_PATH, O_RDONLY);
