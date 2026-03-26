@@ -7,22 +7,19 @@
 #include <errno.h>
 #include <string.h>
 #include <sys/ioctl.h>
-#include "mosquitto.h"
-#include "mqtt_defs.h"
+
+#include "mqtt_common.h"
 #include "../aesd_bme280/aesd_bme280_ioctl.h"
 
 #define SENSOR_DRIVER_PATH  "/dev/aesd_bme280"
 
-static struct mosquitto* mosq = NULL;
+static struct mosquitto* mqtt_client = NULL;
+
 static int sensor_fd = -1;
 
 static void cleanup_and_exit(int exit_code)
 {
-    if (mosq != NULL)
-    {
-        mosquitto_destroy(mosq);
-    }
-    mosquitto_lib_cleanup();
+    mqtt_close(mqtt_client);
     if (sensor_fd >= 0)
     {
         close(sensor_fd);
@@ -64,20 +61,7 @@ int main(int argc, char* argv[])
     openlog(NULL, 0, LOG_USER);
     init_signal_handler();
 
-    mosquitto_lib_init();
-    mosq = mosquitto_new(NULL, true, NULL);
-    if (!mosq)
-    {
-        syslog(LOG_ERR, "Failed to create Mosquitto instance");
-        cleanup_and_exit(EXIT_FAILURE);
-    }
-
-    // Connect to MQTT broker
-    if ((result = mosquitto_connect(mosq, MQTT_BROKER_ADDR, MQTT_BROKER_PORT, 60)) != MOSQ_ERR_SUCCESS)
-    {
-        syslog(LOG_ERR, "Failed to connect to MQTT broker: %s", mosquitto_strerror(result));
-        cleanup_and_exit(result);
-    }
+    mqtt_init(mqtt_client, cleanup_and_exit, NULL);
 
     // Open sensor
     sensor_fd = open(SENSOR_DRIVER_PATH, O_RDONLY);
@@ -87,12 +71,15 @@ int main(int argc, char* argv[])
         result = errno;
         cleanup_and_exit(result);
     }
-
+    
     // Daemonize the process
     if (daemon(0, 0) < 0)
     {
         syslog(LOG_ERR, "Failed to create daemon: %s", strerror(errno));
+        cleanup_and_exit(EXIT_FAILURE);
     }
+
+    mqtt_wait_for_connection(mqtt_client, cleanup_and_exit);
 
     while (1)
     {
@@ -110,9 +97,9 @@ int main(int argc, char* argv[])
                 sensor_data.humidity / 1024,    (sensor_data.humidity % 1024) * 10 / 1024
             );
 
-            if ((result = mosquitto_publish(mosq, NULL, MQTT_TOPIC, sizeof(mqtt_message), mqtt_message, 0, false)) != MOSQ_ERR_SUCCESS)
+            if ((result = mosquitto_publish(mqtt_client, NULL, MQTT_TOPIC, sizeof(mqtt_message), mqtt_message, 0, false)) != MOSQ_ERR_SUCCESS)
             {
-                syslog(LOG_ERR, "Failed to publish message to topic %s", mosquitto_strerror(result));
+                syslog(LOG_ERR, "Failed to publish message to topic: %s", mosquitto_strerror(result));
             }
         }
 

@@ -6,9 +6,9 @@
 #include <unistd.h>
 #include <errno.h>
 #include <string.h>
+#include <sys/stat.h>
 #include <gpiod.h>
-#include "mosquitto.h"
-#include "mqtt_defs.h"
+#include "mqtt_common.h"
 
 #define LED_GPIO_CHIP_PATH  "/dev/gpiochip0"
 #define LED_GPIO_PIN        26
@@ -19,11 +19,7 @@ static struct gpiod_line* led_gpio_line;
 
 static void cleanup_and_exit(int exit_code)
 {
-    if (mqtt_client != NULL)
-    {
-        mosquitto_destroy(mqtt_client);
-    }
-    mosquitto_lib_cleanup();
+    mqtt_close(mqtt_client);
     if (led_gpio_line != NULL)
     {
         gpiod_line_release(led_gpio_line);
@@ -100,25 +96,8 @@ int main(int argc, char* argv[])
         cleanup_and_exit(EXIT_FAILURE);
     }
 
-    mosquitto_lib_init();
-    mqtt_client = mosquitto_new(NULL, true, NULL);
-    if (!mqtt_client)
-    {
-        syslog(LOG_ERR, "Failed to create Mosquitto instance");
-        cleanup_and_exit(EXIT_FAILURE);
-    }
+    mqtt_init(mqtt_client, cleanup_and_exit, mqtt_message_callback);
 
-    mosquitto_message_callback_set(mqtt_client, mqtt_message_callback);
-
-    // Connect to MQTT broker
-    if ((result = mosquitto_connect(mqtt_client, MQTT_BROKER_ADDR, MQTT_BROKER_PORT, 60)) != MOSQ_ERR_SUCCESS)
-    {
-        syslog(LOG_ERR, "Failed to connect to MQTT broker: %s", mosquitto_strerror(result));
-        cleanup_and_exit(result);
-    }
-    
-    mosquitto_subscribe(mqtt_client, NULL, MQTT_TOPIC, 0);
-    
     // Daemonize the process
     if (daemon(0, 0) < 0)
     {
@@ -126,7 +105,14 @@ int main(int argc, char* argv[])
         cleanup_and_exit(EXIT_FAILURE);
     }
 
-    mosquitto_loop_start(mqtt_client);
+    mqtt_wait_for_connection(mqtt_client, cleanup_and_exit);
+
+    // Subscribe to the topic
+    if ((result = mosquitto_subscribe(mqtt_client, NULL, MQTT_TOPIC, 0)) != MOSQ_ERR_SUCCESS)
+    {
+        syslog(LOG_ERR, "Failed to subscribe to topic "MQTT_TOPIC": %s", mosquitto_strerror(result));
+        cleanup_and_exit(result);
+    }
     
     while (1);
     return 0;
