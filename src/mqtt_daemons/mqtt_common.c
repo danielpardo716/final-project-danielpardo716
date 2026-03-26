@@ -31,7 +31,7 @@ static void mqtt_log_callback(struct mosquitto* mosq, void* obj, int level, cons
     syslog(LOG_INFO, "MQTT log [%d]: %s", level, str);
 }
 
-void mqtt_init(struct mosquitto** mqtt_client, void (*cleanup_and_exit)(int), void (*msg_callback)(struct mosquitto*, void*, const struct mosquitto_message*))
+void mqtt_init(struct mosquitto** mqtt_client, char* username, void (*cleanup_and_exit)(int), void (*msg_callback)(struct mosquitto*, void*, const struct mosquitto_message*))
 {
     int result; 
 
@@ -41,6 +41,13 @@ void mqtt_init(struct mosquitto** mqtt_client, void (*cleanup_and_exit)(int), vo
     {
         syslog(LOG_ERR, "Failed to create Mosquitto instance: %s", strerror(errno));
         cleanup_and_exit(EXIT_FAILURE);
+    }
+
+    // Configure username/password
+    if ((result = mosquitto_username_pw_set(*mqtt_client, username, MQTT_PASSWORD)) != MOSQ_ERR_SUCCESS)
+    {
+        syslog(LOG_ERR, "Failed to set username/password: %s", mosquitto_strerror(result));
+        cleanup_and_exit(result);
     }
     
     // Register callbacks

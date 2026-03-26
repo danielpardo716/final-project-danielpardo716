@@ -5,3 +5,6 @@ There are three required certificate types:
 1. Certificate Authority (CA).
 2. Server certificate (for the MQTT broker).
 3. Client certificates (for the publishers/subscribers).
+
+## Password
+Create a plaintext file /etc/mosquitto/passwd containing the connection password string defined in mqtt_defs.h as MQTT_PASSWORD.

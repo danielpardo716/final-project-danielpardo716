@@ -11,6 +11,7 @@
 #include "mqtt_common.h"
 #include "../aesd_bme280/aesd_bme280_ioctl.h"
 
+#define MQTT_USERNAME       "aesd_mqtt_publisher"
 #define SENSOR_DRIVER_PATH  "/dev/aesd_bme280"
 
 static struct mosquitto* mqtt_client = NULL;
@@ -61,7 +62,7 @@ int main(int argc, char* argv[])
     openlog(NULL, 0, LOG_USER);
     init_signal_handler();
 
-    mqtt_init(&mqtt_client, cleanup_and_exit, NULL);
+    mqtt_init(&mqtt_client, MQTT_USERNAME, cleanup_and_exit, NULL);
 
     // Open sensor
     sensor_fd = open(SENSOR_DRIVER_PATH, O_RDONLY);

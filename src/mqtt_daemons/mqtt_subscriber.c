@@ -10,6 +10,7 @@
 #include <gpiod.h>
 #include "mqtt_common.h"
 
+#define MQTT_USERNAME       "aesd_mqtt_subscriber"
 #define LED_GPIO_CHIP_PATH  "/dev/gpiochip0"
 #define LED_GPIO_PIN        26
 
@@ -96,7 +97,7 @@ int main(int argc, char* argv[])
         cleanup_and_exit(EXIT_FAILURE);
     }
 
-    mqtt_init(&mqtt_client, cleanup_and_exit, mqtt_message_callback);
+    mqtt_init(&mqtt_client, MQTT_USERNAME, cleanup_and_exit, mqtt_message_callback);
 
     // Daemonize the process
     if (daemon(0, 0) < 0)
