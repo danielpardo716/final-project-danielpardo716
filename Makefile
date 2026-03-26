@@ -13,9 +13,9 @@ all: build
 # -----------------------------------------------------------------
 # Individual targets – just invoke the Bash helpers
 # -----------------------------------------------------------------
-.PHONY: build flash qemu config ssh dirclean menuconfig
+.PHONY: build flash qemu config ssh keygen mosquitto dirclean menuconfig
 
-build: dirclean
+build:
 	@$(SCRIPT_DIR)/build.sh
 
 qemu:
@@ -29,6 +29,12 @@ config:
 
 ssh:
 	@$(SCRIPT_DIR)/ssh-connect.sh $(HOSTNAME)
+
+keygen:
+	@$(SCRIPT_DIR)/keygen.sh
+
+mosquitto:
+	mosquitto -c /etc/mosquitto/mosquitto.conf -d
 
 dirclean:
 	cd buildroot && make aesd-final-project-dirclean && cd ..

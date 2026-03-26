@@ -2,6 +2,7 @@
 case "$1" in
     start)
         echo "Starting MQTT broker and daemons"
+        sleep 15
         mqtt_publisher
         mqtt_subscriber
         ;;

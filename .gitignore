@@ -13,3 +13,6 @@ linux_source_cdt
 *.mod
 build
 tmp
+mqtt_defs.h
+certs/
+openssl.conf
