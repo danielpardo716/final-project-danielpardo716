@@ -109,9 +109,9 @@ int main(int argc, char* argv[])
     mqtt_wait_for_connection(mqtt_client, cleanup_and_exit);
 
     // Subscribe to the topic
-    if ((result = mosquitto_subscribe(mqtt_client, NULL, MQTT_TOPIC, 0)) != MOSQ_ERR_SUCCESS)
+    if ((result = mosquitto_subscribe(mqtt_client, NULL, MQTT_TOPIC_TEMP, 0)) != MOSQ_ERR_SUCCESS)
     {
-        syslog(LOG_ERR, "Failed to subscribe to topic "MQTT_TOPIC": %s", mosquitto_strerror(result));
+        syslog(LOG_ERR, "Failed to subscribe to topic "MQTT_TOPIC_TEMP": %s", mosquitto_strerror(result));
         cleanup_and_exit(result);
     }
     

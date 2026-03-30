@@ -57,7 +57,7 @@ int main(int argc, char* argv[])
 {
     int result;    
     struct aesd_bme280_data sensor_data;
-    char mqtt_message[128];
+    char mqtt_message[16];
 
     openlog(NULL, 0, LOG_USER);
     init_signal_handler();
@@ -91,17 +91,27 @@ int main(int argc, char* argv[])
         }
         else
         {
-            // Format and publish message
-            sprintf(mqtt_message, "Temperature: %d.%02d°C, Pressure: %u.%02uPa, Humidity: %u.%01u%%",
-                sensor_data.temperature / 100,  abs(sensor_data.temperature) % 100,
-                sensor_data.pressure / 256,     (sensor_data.pressure % 256) * 100 / 256,
-                sensor_data.humidity / 1024,    (sensor_data.humidity % 1024) * 10 / 1024
-            );
-
-            if ((result = mosquitto_publish(mqtt_client, NULL, MQTT_TOPIC, sizeof(mqtt_message), mqtt_message, 0, false)) != MOSQ_ERR_SUCCESS)
+            // Format and publish temperature
+            sprintf(mqtt_message, "%d.%02d°C", sensor_data.temperature / 100,  abs(sensor_data.temperature) % 100);
+            if ((result = mosquitto_publish(mqtt_client, NULL, MQTT_TOPIC_TEMP, sizeof(mqtt_message), mqtt_message, 0, false)) != MOSQ_ERR_SUCCESS)
             {
-                syslog(LOG_ERR, "Failed to publish message to topic: %s", mosquitto_strerror(result));
+                syslog(LOG_ERR, "Failed to publish temperature: %s", mosquitto_strerror(result));
             }
+
+            // Format and publish pressure
+            sprintf(mqtt_message, "%u.%02uPa", sensor_data.pressure / 256, (sensor_data.pressure % 256) * 100 / 256);
+            if ((result = mosquitto_publish(mqtt_client, NULL, MQTT_TOPIC_PRESSURE, sizeof(mqtt_message), mqtt_message, 0, false)) != MOSQ_ERR_SUCCESS)
+            {
+                syslog(LOG_ERR, "Failed to publish pressure: %s", mosquitto_strerror(result));
+            }
+
+            // Format and publish humidity
+            sprintf(mqtt_message, "%u.%01u%%", sensor_data.humidity / 1024, (sensor_data.humidity % 1024) * 10 / 1024);
+            if ((result = mosquitto_publish(mqtt_client, NULL, MQTT_TOPIC_HUMIDITY, sizeof(mqtt_message), mqtt_message, 0, false)) != MOSQ_ERR_SUCCESS)
+            {
+                syslog(LOG_ERR, "Failed to publish humidity: %s", mosquitto_strerror(result));
+            }
+
         }
 
         // Sleep for 3 seconds

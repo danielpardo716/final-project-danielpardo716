@@ -3,7 +3,7 @@
 
 #define MQTT_BROKER_ADDR    "localhost"
 #define MQTT_BROKER_PORT    1883
-#define MQTT_TOPIC          "aesd/sensors/ambient"
+#define MQTT_TOPIC          "aesd/test"
 
 char mqtt_test_message[] = "Hello from MQTT Publisher!";
 
